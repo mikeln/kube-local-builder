@@ -13,6 +13,7 @@
 DEFAULT_REPO := samsung_ag
 DOCKER_REPO ?= $(DEFAULT_REPO)
 #DOCKER_REPO ?= quay.io/mikeln
+DOCKER_REPO_ESC := $(subst /,\/,$(DOCKER_REPO))
 
 # this picks up the latest VERSION.  You can simply
 # hard code it if you want to build an older one:
@@ -43,7 +44,8 @@ repo-warning:
 		false; \
 	else \
 		echo "+++++++++++++++++++++++++++++++++++++++++++++++++++"; \
-		echo "  Your DOCKER_REPO is set to: $(DOCKER_REPO)"; \
+		echo "  Your DOCKER_REPO is set to: $(DOCKER_REPO) ";\
+		echo "  escaped: $(DOCKER_REPO_ESC)"; \
 		echo "  Please execute 'make all' to build"; \
 		echo "+++++++++++++++++++++++++++++++++++++++++++++++++++"; \
 		if [ $(V) = $(DEFAULT_V) ]; then \
@@ -69,8 +71,8 @@ $(H): $(H).tmp master-multi.json.tmp master.json.tmp safe_format_and_mount.tmp D
 
 $(H).tmp: $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H
 	cp $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H $H.tmp
-	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/quay.io\/mikeln/g" $K/images/hyperkube/master-multi.json > master-multi.json.tmp
-	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/quay.io\/mikeln/g" $K/images/hyperkube/master.json > master.json.tmp
+	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master-multi.json > master-multi.json.tmp
+	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master.json > master.json.tmp
 	cp $K/saltbase/salt/helpers/safe_format_and_mount safe_format_and_mount.tmp
 
 $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H :

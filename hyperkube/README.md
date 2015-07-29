@@ -28,7 +28,7 @@ all
 clean (clean local build and images)
 clean-all (clean + clean kubernetes)
    KUBEROOT/make clean
-push
+push (upload to given DOCKER_REPO)
 ```
 ## Notes
 
