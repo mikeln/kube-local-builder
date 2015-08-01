@@ -63,7 +63,7 @@ repo-warning:
 all: $(H)
 
 
-$(H): $(H).tmp master-multi.json.tmp master.json.tmp safe_format_and_mount.tmp Dockerfile
+$(H): $(H).tmp master-multi.json.build master.json.build safe_format_and_mount.build Dockerfile
 	@echo "building app $(VERSION)"
 	docker build -t $(IMAGENAME):$(V) --rm=true --force-rm=true .
 	@touch $@
@@ -71,9 +71,19 @@ $(H): $(H).tmp master-multi.json.tmp master.json.tmp safe_format_and_mount.tmp D
 
 $(H).tmp: $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H
 	cp $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H $H.tmp
-	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master-multi.json > master-multi.json.tmp
-	sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master.json > master.json.tmp
-	cp $K/saltbase/salt/helpers/safe_format_and_mount safe_format_and_mount.tmp
+
+master-multi.json.build: master-multi.json $(H).tmp
+	#sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master-multi.json > master-multi.json.tmp
+	sed -e "s/VERSION/${V}/g" -e "s/REPO/${DOCKER_REPO_ESC}/g" master-multi.json > master-multi.json.build
+
+master.json.build: master.json $(H).tmp
+	#sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master.json > master.json.tmp
+	sed -e "s/VERSION/${V}/g" -e "s/REPO/${DOCKER_REPO_ESC}/g" master.json > master.json.build
+
+safe_format_and_mount.build: $(H).tmp
+	#cp $K/saltbase/salt/helpers/safe_format_and_mount safe_format_and_mount.tmp
+	cp $K/saltbase/salt/helpers/safe_format_and_mount safe_format_and_mount.build
+
 
 $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$H :
 	(cd $(KUBEROOT)/build; ./run.sh hack/build-go.sh )
@@ -88,6 +98,6 @@ clean-all: clean
 
 clean:
 	-docker rmi $(IMAGENAME):$(V)
-	-rm -f *.tmp *.src $(H)
+	-rm -f *.tmp *.build *.src $(H)
 
 

@@ -11,7 +11,7 @@ COPY ./hyperkube.tmp /hyperkube
 RUN chmod a+rx /hyperkube
 
 
-COPY ./master-multi.json.tmp /etc/kubernetes/manifests-multi/master.json
-COPY ./master.json.tmp /etc/kubernetes/manifests/master.json
-COPY ./safe_format_and_mount.tmp /usr/share/google/safe_format_and_mount
+COPY ./master-multi.json.build /etc/kubernetes/manifests-multi/master.json
+COPY ./master.json.build /etc/kubernetes/manifests/master.json
+COPY ./safe_format_and_mount.build /usr/share/google/safe_format_and_mount
 RUN chmod a+rx /usr/share/google/safe_format_and_mount
