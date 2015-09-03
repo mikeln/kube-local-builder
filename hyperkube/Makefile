@@ -1,18 +1,17 @@
 # build a hyperkube image.
 
-.PHONY: all repo-warning clean clean-all
+.PHONY: all repo-warning clean clean-all s3cp push
 
 # this is the only variable you need to set.
 # it can be set on the make command line:
-# make DOCKER_REPO=mydockerhub
+# make DOCKER_REPO=myrepo
 # or with an exported environment variable:
-# export DOCKER_REPO=mydockerhub
-# you can include the repo if not on dockerhub, like:
-# make DOCKER_REPO=gcr.io/google_containers
-#
+# export DOCKER_REPO=myrepo
+
+# docker repo to push to / name in image
+# eg: quay.io/mikeln
 DEFAULT_REPO := samsung_ag
 DOCKER_REPO ?= $(DEFAULT_REPO)
-#DOCKER_REPO ?= quay.io/mikeln
 DOCKER_REPO_ESC := $(subst /,\/,$(DOCKER_REPO))
 
 # kubernetes source code location, relative to the cluster directory
@@ -70,6 +69,7 @@ $(BINARY): $(BINARY).tmp master-multi.json.build master.json.build safe_format_a
 
 $(BINARY).tmp: $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$(BINARY)
 	cp $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$(BINARY) $(BINARY).tmp
+	cp $(KUBEROOT)/_output/dockerized/bin/linux/amd64/kubectl kubectl.tmp
 
 master-multi.json.build: master-multi.json $(BINARY).tmp
 	#sed -e "s/VERSION/$V/g" -e "s/gcr.io\/google_containers/$(DOCKER_REPO_ESC)/g" $K/images/hyperkube/master-multi.json > master-multi.json.tmp
@@ -86,8 +86,10 @@ safe_format_and_mount.build: $(BINARY).tmp
 
 $(KUBEROOT)/_output/dockerized/bin/linux/amd64/$(BINARY) :
 	(cd $(KUBEROOT)/build; ./run.sh hack/build-go.sh )
-#	(cd $(KUBEROOT)/build; ./run.sh hack/build-cross.sh )
-	#(cd $(KUBEROOT); make )
+
+s3cp:
+	aws s3 cp --acl public-read $(BINARY).tmp s3://sundry-automata/hyperkube/$(V)/$(BINARY)
+	aws s3 cp --acl public-read kubectl.tmp s3://sundry-automata/hyperkube/$(V)/kubectl
 
 push:
 	docker push $(IMAGENAME):$(V)
